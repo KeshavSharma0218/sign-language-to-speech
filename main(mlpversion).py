@@ -11,7 +11,7 @@ model = load_model("asl_landmark_mlp.h5")
 
 labels = sorted([
     'A','B','C','D','E','F','G','H','I','J','K','L','M',
-    'N','O','P','Q','R','S','T','U','V','W','X','Y','Z'
+    'N','O','P','Q','R','S','T','U','V','W','X','Y','Z','SPACE','DELETE','NOTHING'
 ])
 
 # --------------------------
