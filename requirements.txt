@@ -1,0 +1,26 @@
+# Core libraries
+numpy
+pandas
+matplotlib
+
+# Machine Learning
+tensorflow
+keras
+
+# Computer Vision
+opencv-python
+mediapipe
+Pillow
+
+# Speech
+pyttsx3
+gTTS
+
+# Deployment / GUI
+streamlit
+# If you want desktop GUI later:
+# tk  # usually comes with Python
+# kivy
+
+# Utilities
+scikit-learn
