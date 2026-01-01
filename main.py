@@ -66,7 +66,8 @@ class ASLTranslator(QWidget):
         self.cap = None
         self.camera_on = False
 
-        self.history = []
+        self.text_b4_autocorrect = ""
+        self.undid = False
         self.window = 8
 
         self.current_text = ""
@@ -93,6 +94,7 @@ class ASLTranslator(QWidget):
         self.stop_btn = QPushButton("Stop Camera")
         self.clear_btn = QPushButton("Clear Text")
         self.speak_btn = QPushButton("Speak")
+        self.undo_btn = QPushButton("Undo")
 
         self.spell = SpellChecker()
 
@@ -101,6 +103,7 @@ class ASLTranslator(QWidget):
         buttons.addWidget(self.stop_btn)
         buttons.addWidget(self.clear_btn)
         buttons.addWidget(self.speak_btn)
+        buttons.addWidget(self.undo_btn)
 
         layout = QVBoxLayout()
         layout.addWidget(self.video_label)
@@ -119,6 +122,7 @@ class ASLTranslator(QWidget):
         self.stop_btn.clicked.connect(self.stop_camera)
         self.clear_btn.clicked.connect(self.clear_text)
         self.speak_btn.clicked.connect(self.speak_text)
+        self.undo_btn.clicked.connect(self.undo_autocorrect)
 
     def start_camera(self):
         if not self.camera_on:
@@ -159,7 +163,11 @@ class ASLTranslator(QWidget):
         landmarks = extract_landmarks(frame)
         if landmarks is None:
             self.confidence_bar.setValue(0)
-            if self.current_text and not self.current_text.endswith(" "):
+            if (
+                self.current_text
+                and not self.current_text.endswith(" ")
+                and not self.undid
+            ):
                 self.autocorrect_last_word()
             return
 
@@ -191,18 +199,11 @@ class ASLTranslator(QWidget):
             if elapsed >= self.hold_time:
                 self.current_text += letter
                 self.text_area.setText(self.current_text)
+                self.undid = False
 
                 self.last_letter = None
                 self.stable_since = None
                 self.hold_bar.setValue(100)
-
-    def smooth(self, letter):
-        self.history.append(letter)
-        if len(self.history) < self.window:
-            return None
-        if len(self.history) > self.window:
-            self.history.pop(0)
-        return max(set(self.history), key=self.history.count)
 
     def clear_text(self):
         self.current_text = ""
@@ -211,6 +212,14 @@ class ASLTranslator(QWidget):
     def speak_text(self):
         self.tts.say(self.current_text)
         self.tts.runAndWait()
+
+    def undo_autocorrect(self):
+        if self.text_b4_autocorrect == "":
+            return
+
+        self.current_text = self.text_b4_autocorrect
+        self.text_area.setText(self.current_text)
+        self.undid = True
 
     def autocorrect_last_word(self):
         words = self.current_text.strip().split()
@@ -222,6 +231,8 @@ class ASLTranslator(QWidget):
 
         if len(last_word) <= 2:
             return
+
+        self.text_b4_autocorrect = self.current_text
 
         corrected = self.spell.correction(last_word)
 
